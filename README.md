@@ -4,6 +4,14 @@ This is a simple sketch demonstrating the capability of the [TTGO T-Beam](https:
 
 Derived from [sbiermann/Lora-TTNMapper-ESP32](https://github.com/sbiermann/Lora-TTNMapper-ESP32) and with some information/inspiration from [cyberman54/ESP32-Paxcounter](https://github.com/cyberman54/ESP32-Paxcounter) and [Edzelf/LoRa](https://github.com/Edzelf/LoRa).
 
+## Software dependencies
+
+Arduino IDE [ESP32 extension](https://github.com/espressif/arduino-esp32)
+
+[TinyGPS++](http://arduiniana.org/libraries/tinygpsplus/)
+
+[LMIC-Arduino](https://github.com/matthijskooijman/arduino-lmic) : Make sure to get the last version - *1.5.0+arduino-2* currently - because the arduino IDE library updater is getting confused by the versioning scheme of that library.
+
 ## Instructions
 
 You need to connect the [T-Beam](https://github.com/LilyGO/TTGO-T-Beam) DIO1 pin marked *Lora1* to the *pin 33* - So that the ESP32 can read that output from the Lora module.
