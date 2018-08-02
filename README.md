@@ -21,6 +21,29 @@ You can program the T-Beam using the [Arduino ESP32](https://github.com/espressi
 
 On The Things Network side, the settings needed are available [here](https://www.thethingsnetwork.org/docs/applications/ttnmapper/).
 
+Configure the Payload decoder with:
+```javascript
+function Decoder(bytes, port) {
+  
+  var decoded = {};
+  var str = '';
+  var length = 0;
+  for (var i = 0; i < bytes.length-1; i += 1)
+    str += (bytes[i] + ',') ;
+    length = i;
+  str += bytes[length];
+
+  decoded.hexstring = str;  
+  decoded.latitude = ((parseInt(bytes[2] + (bytes[1] << 8) + (bytes[0] << 16 )) / 16777215) * 180) - 90;
+  decoded.longitude = ((parseInt(bytes[5] + (bytes[4] << 8) + (bytes[3] << 16 )) / 16777215) * 360) - 180;
+  decoded.altitude = (bytes[7] + (bytes[6] << 8) );
+  decoded.hdop = bytes[8]/ 10;
+
+
+  return decoded;
+}
+```
+
 Let me know if more detailed instructions are needed.
 
 ## Todolist
@@ -33,3 +56,4 @@ Let me know if more detailed instructions are needed.
 * Adapt the data send frequency based on current velocity : When not moving, an update per hour should be enough.
 
 Let me know if you think anything else would make sense for a TTN mapper node : Open an issue, I will consider it.
+
