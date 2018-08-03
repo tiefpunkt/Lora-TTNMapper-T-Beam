@@ -27,7 +27,7 @@ void os_getDevKey (u1_t* buf) { }
 
 static osjob_t sendjob;
 // Schedule TX every this many seconds (might become longer due to duty cycle limitations).
-const unsigned TX_INTERVAL = 30;
+const unsigned TX_INTERVAL = 15;
 
 // Pin mapping
 const lmic_pinmap lmic_pins = {
@@ -43,6 +43,7 @@ uint8_t txBuffer[9];
 uint32_t LatitudeBinary, LongitudeBinary;
 uint16_t altitudeGps;
 uint8_t hdopGps;
+uint previousMillis;
 
 #define PMTK_SET_NMEA_UPDATE_05HZ  "$PMTK220,2000*1C"
 #define PMTK_SET_NMEA_UPDATE_1HZ  "$PMTK220,1000*1F"
@@ -154,20 +155,67 @@ void onEvent (ev_t ev) {
 }
 
 void do_send(osjob_t* j) {  
+
   // Check if there is not a current TX/RX job running
   if (LMIC.opmode & OP_TXRXPEND)
   {
     Serial.println(F("OP_TXRXPEND, not sending"));
   }
   else
-  {
-    // Prepare upstream data transmission at the next possible time.
-    build_packet();
-    LMIC_setTxData2(1, txBuffer, sizeof(txBuffer), 0);
-    Serial.println(F("Packet queued"));
-    digitalWrite(BUILTIN_LED, HIGH);
+  { 
+    while (GPSSerial.available())
+    {
+      gps.encode(GPSSerial.read());
+    }
+    if (checkGpsFix())
+    {
+      // Prepare upstream data transmission at the next possible time.
+      build_packet();
+      LMIC_setTxData2(1, txBuffer, sizeof(txBuffer), 0);
+      Serial.println(F("Packet queued"));
+      digitalWrite(BUILTIN_LED, HIGH);
+    }
+    else
+    {
+      //try again in 3 seconds
+      os_setTimedCallback(&sendjob, os_getTime() + sec2osticks(3), do_send);
+    }
   }
   // Next TX is scheduled after TX_COMPLETE event.
+}
+bool checkGpsFix()
+{
+  if (gps.location.isValid() && 
+      gps.location.age() < 2000 &&
+      gps.hdop.isValid() &&
+      gps.hdop.value() <= 400 &&
+      gps.hdop.age() < 2000 &&
+      gps.altitude.isValid() && 
+      gps.altitude.age() < 2000 )
+  {
+    Serial.println("Valid gps Fix.");
+    return true;
+  }
+  else
+  {
+    Serial.println("No gps Fix.");
+    sprintf(s, "location valid: %i" , gps.location.isValid());
+    Serial.println(s);
+    sprintf(s, "location age: %i" , gps.location.age());
+    Serial.println(s);
+    sprintf(s, "hdop valid: %i" , gps.hdop.isValid());
+    Serial.println(s);
+    sprintf(s, "hdop age: %i" , gps.hdop.age());
+    Serial.println(s);
+    sprintf(s, "hdop: %i" , gps.hdop.value());
+    Serial.println(s);
+    sprintf(s, "altitude valid: %i" , gps.altitude.isValid());
+    Serial.println(s);
+    sprintf(s, "altitude age: %i" , gps.altitude.age());
+    Serial.println(s);
+
+    return false;
+  }
 }
 
 void setup() {
@@ -209,30 +257,13 @@ void setup() {
 
   // Set data rate and transmit power for uplink (note: txpow seems to be ignored by the library)
   LMIC_setDrTxpow(DR_SF7,14); 
-  
+
+  do_send(&sendjob);
   pinMode(BUILTIN_LED, OUTPUT);
   digitalWrite(BUILTIN_LED, LOW);
   
 }
 
 void loop() {
-  
-  // Update GPS
-  while (GPSSerial.available())
-  {
-    gps.encode(GPSSerial.read());
-  }
-  
-  delay(1000);
-  
-  if (gps.location.isValid())
-  {
-    Serial.println("GPS has fixed.");
-    do_send(&sendjob);
     os_runloop_once();
-  }
-  else
-  {
-    Serial.println("No fix yet...");
-  }
 }
