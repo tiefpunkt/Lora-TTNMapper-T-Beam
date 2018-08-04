@@ -1,22 +1,17 @@
-#include <HardwareSerial.h>
-#include <TinyGPS++.h>
 #include <lmic.h>
 #include <hal/hal.h>
 #include <WiFi.h>
 
 // UPDATE the config.h file in the same folder WITH YOUR TTN KEYS AND ADDR.
 #include "config.h"
+#include "gps.h"
 
 // T-Beam specific hardware
 #define BUILTIN_LED 21
-#define GPS_TX 12
-#define GPS_RX 15
-
-// The TinyGPS++ object
-TinyGPSPlus gps;
-HardwareSerial GPSSerial(1);
 
 char s[32]; // used to sprintf for Serial output
+uint8_t txBuffer[9];
+gps gps;
 
 // These callbacks are only used in over-the-air activation, so they are
 // left empty here (we cannot leave them out completely unless
@@ -36,54 +31,6 @@ const lmic_pinmap lmic_pins = {
   .rst = LMIC_UNUSED_PIN, // was "14,"
   .dio = {26, 33, 32},
 };
-
-unsigned long last_update = 0;
-String toLog;
-uint8_t txBuffer[9];
-uint32_t LatitudeBinary, LongitudeBinary;
-uint16_t altitudeGps;
-uint8_t hdopGps;
-uint previousMillis;
-
-#define PMTK_SET_NMEA_UPDATE_05HZ  "$PMTK220,2000*1C"
-#define PMTK_SET_NMEA_UPDATE_1HZ  "$PMTK220,1000*1F"
-#define PMTK_SET_NMEA_OUTPUT_RMCGGA "$PMTK314,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*28"
-
-void build_packet()
-{
-  LatitudeBinary = ((gps.location.lat() + 90) / 180.0) * 16777215;
-  LongitudeBinary = ((gps.location.lng() + 180) / 360.0) * 16777215;
-  
-  sprintf(s, "Lat: %f", gps.location.lat());
-  Serial.println(s);
-  
-  sprintf(s, "Lng: %f", gps.location.lng());
-  Serial.println(s);
-  
-  txBuffer[0] = ( LatitudeBinary >> 16 ) & 0xFF;
-  txBuffer[1] = ( LatitudeBinary >> 8 ) & 0xFF;
-  txBuffer[2] = LatitudeBinary & 0xFF;
-
-  txBuffer[3] = ( LongitudeBinary >> 16 ) & 0xFF;
-  txBuffer[4] = ( LongitudeBinary >> 8 ) & 0xFF;
-  txBuffer[5] = LongitudeBinary & 0xFF;
-
-  altitudeGps = gps.altitude.meters();
-  txBuffer[6] = ( altitudeGps >> 8 ) & 0xFF;
-  txBuffer[7] = altitudeGps & 0xFF;
-
-  hdopGps = gps.hdop.value()/10;
-  txBuffer[8] = hdopGps & 0xFF;
-
-  toLog = "";
-  for(size_t i = 0; i<sizeof(txBuffer); i++)
-  {
-    char buffer[3];
-    sprintf(buffer, "%02x", txBuffer[i]);
-    toLog = toLog + String(buffer);
-  }
-  Serial.println(toLog);
-}
 
 void onEvent (ev_t ev) {
   switch (ev) {
@@ -163,14 +110,10 @@ void do_send(osjob_t* j) {
   }
   else
   { 
-    while (GPSSerial.available())
-    {
-      gps.encode(GPSSerial.read());
-    }
-    if (checkGpsFix())
+    if (gps.checkGpsFix())
     {
       // Prepare upstream data transmission at the next possible time.
-      build_packet();
+      gps.buildPacket(txBuffer);
       LMIC_setTxData2(1, txBuffer, sizeof(txBuffer), 0);
       Serial.println(F("Packet queued"));
       digitalWrite(BUILTIN_LED, HIGH);
@@ -183,40 +126,6 @@ void do_send(osjob_t* j) {
   }
   // Next TX is scheduled after TX_COMPLETE event.
 }
-bool checkGpsFix()
-{
-  if (gps.location.isValid() && 
-      gps.location.age() < 2000 &&
-      gps.hdop.isValid() &&
-      gps.hdop.value() <= 400 &&
-      gps.hdop.age() < 2000 &&
-      gps.altitude.isValid() && 
-      gps.altitude.age() < 2000 )
-  {
-    Serial.println("Valid gps Fix.");
-    return true;
-  }
-  else
-  {
-    Serial.println("No gps Fix.");
-    sprintf(s, "location valid: %i" , gps.location.isValid());
-    Serial.println(s);
-    sprintf(s, "location age: %i" , gps.location.age());
-    Serial.println(s);
-    sprintf(s, "hdop valid: %i" , gps.hdop.isValid());
-    Serial.println(s);
-    sprintf(s, "hdop age: %i" , gps.hdop.age());
-    Serial.println(s);
-    sprintf(s, "hdop: %i" , gps.hdop.value());
-    Serial.println(s);
-    sprintf(s, "altitude valid: %i" , gps.altitude.isValid());
-    Serial.println(s);
-    sprintf(s, "altitude age: %i" , gps.altitude.age());
-    Serial.println(s);
-
-    return false;
-  }
-}
 
 void setup() {
   Serial.begin(115200);
@@ -225,13 +134,9 @@ void setup() {
   //Turn off WiFi and Bluetooth
   WiFi.mode(WIFI_OFF);
   btStop();
-  
-  GPSSerial.begin(9600, SERIAL_8N1, GPS_TX, GPS_RX);
-  GPSSerial.setTimeout(2);
 
-  GPSSerial.println(F(PMTK_SET_NMEA_OUTPUT_RMCGGA));
-  GPSSerial.println(F(PMTK_SET_NMEA_UPDATE_1HZ));   // 1 Hz update rate
-  
+  gps.init();
+
   // LMIC init
   os_init();
   // Reset the MAC state. Session and pending data transfers will be discarded.
