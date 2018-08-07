@@ -24,23 +24,28 @@ On The Things Network side, the settings needed are available [here](https://www
 Configure the Payload decoder with:
 ```javascript
 function Decoder(bytes, port) {
+    var decoded = {};
+
+    decoded.latitude = ((bytes[0]<<16)>>>0) + ((bytes[1]<<8)>>>0) + bytes[2];
+    decoded.latitude = (decoded.latitude / 16777215.0 * 180) - 90;
   
-  var decoded = {};
-  var str = '';
-  var length = 0;
-  for (var i = 0; i < bytes.length-1; i += 1)
-    str += (bytes[i] + ',') ;
-    length = i;
-  str += bytes[length];
+    decoded.longitude = ((bytes[3]<<16)>>>0) + ((bytes[4]<<8)>>>0) + bytes[5];
+    decoded.longitude = (decoded.longitude / 16777215.0 * 360) - 180;
+  
+    var altValue = ((bytes[6]<<8)>>>0) + bytes[7];
+    var sign = bytes[6] & (1 << 7);
+    if(sign)
+    {
+        decoded.altitude = 0xFFFF0000 | altValue;
+    }
+    else
+    {
+        decoded.altitude = altValue;
+    }
+  
+    decoded.hdop = bytes[8] / 10.0;
 
-  decoded.hexstring = str;  
-  decoded.latitude = ((parseInt(bytes[2] + (bytes[1] << 8) + (bytes[0] << 16 )) / 16777215) * 180) - 90;
-  decoded.longitude = ((parseInt(bytes[5] + (bytes[4] << 8) + (bytes[3] << 16 )) / 16777215) * 360) - 180;
-  decoded.altitude = (bytes[7] + (bytes[6] << 8) );
-  decoded.hdop = bytes[8]/ 10;
-
-
-  return decoded;
+    return decoded;
 }
 ```
 
@@ -52,7 +57,7 @@ Let me know if more detailed instructions are needed.
 * Save and reload the frame counter somewhere - GPS RTC data ? SPIFFS ? EEPROM ? - so I can check the "Frame Counter Checks" box as recommended on TTN.
 * Also save the GPS 'status' so that on next boot it gets a fix faster.
 * Switch to OTAA auth method for TTN and save the 'credentials' for reboot use.
-* Reduce the power needed ! That thing is a power hog currently, we need to make it sleep most of the time as possible.
+* ~~Reduce the power needed ! That thing is a power hog currently, we need to make it sleep most of the time as possible.~~
 * Adapt the data send frequency based on current velocity : When not moving, an update per hour should be enough.
 
 Let me know if you think anything else would make sense for a TTN mapper node : Open an issue, I will consider it.
