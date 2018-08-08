@@ -18,10 +18,6 @@ HardwareSerial GPSSerial(1);
 
 char s[32]; // used to sprintf for Serial output
 
-#define TIME_TO_SLEEP  14        /* Time ESP32 will go to sleep (in seconds) */
-// Schedule TX every this many seconds (might become longer due to duty cycle limitations).
-const unsigned TX_INTERVAL = 15;
-
 // These callbacks are only used in over-the-air activation, so they are
 // left empty here (we cannot leave them out completely unless
 // DISABLE_JOIN is set in config.h, otherwise the linker will complain).
@@ -30,7 +26,8 @@ void os_getDevEui (u1_t* buf) { }
 void os_getDevKey (u1_t* buf) { }
 
 static osjob_t sendjob;
-
+// Schedule TX every this many seconds (might become longer due to duty cycle limitations).
+const unsigned TX_INTERVAL = 30;
 
 // Pin mapping
 const lmic_pinmap lmic_pins = {
@@ -137,11 +134,6 @@ void onEvent (ev_t ev) {
       }
       // Schedule next transmission
       os_setTimedCallback(&sendjob, os_getTime() + sec2osticks(TX_INTERVAL), do_send);
-      Serial.println("going to sleep");
-      delay(200); // delay to complete serial message send.
-      esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * 1000000);
-      esp_light_sleep_start();
-      Serial.println("wakeup");
       break;
     case EV_LOST_TSYNC:
       Serial.println(F("EV_LOST_TSYNC"));
