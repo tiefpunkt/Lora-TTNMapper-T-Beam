@@ -52,6 +52,15 @@ void gps::buildPacket(uint8_t txBuffer[9])
   txBuffer[8] = hdopGps & 0xFF;
 }
 
+void gps::gdisplay(uint16_t txBuffer2[5])
+{
+  txBuffer2[0] = tGps.satellites.value();
+  txBuffer2[1] = tGps.speed.kmph();
+  txBuffer2[2] = tGps.course.deg();
+  txBuffer2[3] = tGps.altitude.meters();
+  txBuffer2[4] = tGps.hdop.value()/10;
+}
+
 bool gps::checkGpsFix()
 {
   encode();
