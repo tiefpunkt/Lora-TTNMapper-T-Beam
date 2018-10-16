@@ -17,6 +17,7 @@ Adafruit_SSD1306 display(OLED_RESET);
 
 char s[32]; // used to sprintf for Serial output
 uint8_t txBuffer[9];
+uint16_t txBuffer2[5];
 gps gps;
 
 // These callbacks are only used in over-the-air activation, so they are
@@ -147,6 +148,12 @@ void setup() {
   display.setCursor(1,0);
   // show text / Text anzeigen
   display.println("TTN Mapper");
+  display.setCursor(0,16);
+  display.println("powered by");
+  display.setCursor(0,32);
+  display.println("TTGO-LoRa");
+  display.setCursor(0,48);
+  display.println("T-Beam");
   display.display();
   
   //Turn off WiFi and Bluetooth
@@ -188,4 +195,37 @@ void setup() {
 
 void loop() {
     os_runloop_once();
+    if (gps.checkGpsFix())
+    { 
+    gps.gdisplay(txBuffer2);
+    float hdop = txBuffer2[4] / 10.0;
+    
+    display.clearDisplay();
+    // set text color / Textfarbe setzen
+    display.setTextColor(WHITE);
+    // set text size / Textgroesse setzen
+    display.setTextSize(1);
+    display.setCursor(0,0);
+    display.println("SAT: " + String(txBuffer2[0]));
+    display.setCursor(0,10);
+    display.println("Speed: " + String(txBuffer2[1]));
+    display.setCursor(0,20);
+    display.println("Course: " + String(txBuffer2[2]));
+    display.setCursor(0,30);
+    display.println("Alt: " + String(txBuffer2[3]));
+    display.setCursor(0,40);
+    display.println("HDOP: " + String(hdop));
+    display.display();
+    }
+    else
+    {
+    display.clearDisplay();
+    display.setTextColor(WHITE);
+    display.setTextSize(2);
+    display.setCursor(0,0);
+    display.println("No valid");
+    display.setCursor(0,16);
+    display.println("GPS fix");
+    display.display();
+    }
 }
