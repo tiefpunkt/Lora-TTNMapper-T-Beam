@@ -1,13 +1,19 @@
 #include <lmic.h>
 #include <hal/hal.h>
 #include <WiFi.h>
+#include <Wire.h>
 
 // UPDATE the config.h file in the same folder WITH YOUR TTN KEYS AND ADDR.
 #include "config.h"
 #include "gps.h"
+#include "Adafruit_GFX.h"
+#include "Adafruit_SSD1306.h"
 
 // T-Beam specific hardware
 #define BUILTIN_LED 14
+
+#define OLED_RESET 4 // not used
+Adafruit_SSD1306 display(OLED_RESET);
 
 char s[32]; // used to sprintf for Serial output
 uint8_t txBuffer[9];
@@ -130,6 +136,18 @@ void do_send(osjob_t* j) {
 void setup() {
   Serial.begin(115200);
   Serial.println(F("TTN Mapper"));
+  
+   display.begin(SSD1306_SWITCHCAPVCC, 0x3C, 0, 22, 21, 800000);
+  display.clearDisplay();
+  // set text color / Textfarbe setzen
+  display.setTextColor(WHITE);
+    // set text size / Textgroesse setzen
+  display.setTextSize(2);
+  // set text cursor position / Textstartposition einstellen
+  display.setCursor(1,0);
+  // show text / Text anzeigen
+  display.println("TTN Mapper");
+  display.display();
   
   //Turn off WiFi and Bluetooth
   WiFi.mode(WIFI_OFF);
