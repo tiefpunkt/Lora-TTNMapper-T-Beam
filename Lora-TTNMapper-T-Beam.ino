@@ -199,11 +199,8 @@ void loop() {
     { 
     gps.gdisplay(txBuffer2);
     float hdop = txBuffer2[4] / 10.0;
-    
     display.clearDisplay();
-    // set text color / Textfarbe setzen
     display.setTextColor(WHITE);
-    // set text size / Textgroesse setzen
     display.setTextSize(1);
     display.setCursor(0,0);
     display.println("SAT: " + String(txBuffer2[0]));
@@ -214,7 +211,9 @@ void loop() {
     display.setCursor(0,30);
     display.println("Alt: " + String(txBuffer2[3]));
     display.setCursor(0,40);
-    display.println("HDOP: " + String(hdop));
+    display.println("HDOP: ");
+    display.setCursor(35,40);
+    display.println(hdop,1);
     display.display();
     }
     else
