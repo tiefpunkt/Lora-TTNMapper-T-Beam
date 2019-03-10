@@ -15,6 +15,8 @@
 #define OLED_RESET 4 // not used
 Adafruit_SSD1306 display(OLED_RESET);
 
+String LoraStatus;
+
 char s[32]; // used to sprintf for Serial output
 uint8_t txBuffer[9];
 uint16_t txBuffer2[5];
@@ -31,6 +33,10 @@ static osjob_t sendjob;
 // Schedule TX every this many seconds (might become longer due to duty cycle limitations).
 const unsigned TX_INTERVAL = 30;
 
+// For battery mesurement
+const uint8_t vbatPin = 35;
+float VBAT;  // battery voltage from ESP32 ADC read
+
 // Pin mapping
 const lmic_pinmap lmic_pins = {
   .nss = 18,
@@ -43,39 +49,50 @@ void onEvent (ev_t ev) {
   switch (ev) {
     case EV_SCAN_TIMEOUT:
       Serial.println(F("EV_SCAN_TIMEOUT"));
+      LoraStatus = "EV_SCAN_TIMEOUT";
       break;
     case EV_BEACON_FOUND:
       Serial.println(F("EV_BEACON_FOUND"));
+      LoraStatus = "EV_BEACON_FOUND";
       break;
     case EV_BEACON_MISSED:
       Serial.println(F("EV_BEACON_MISSED"));
+      LoraStatus = "EV_BEACON_MISSED";
       break;
     case EV_BEACON_TRACKED:
       Serial.println(F("EV_BEACON_TRACKED"));
+      LoraStatus = "EV_BEACON_TRACKED";
       break;
     case EV_JOINING:
       Serial.println(F("EV_JOINING"));
+      LoraStatus = "EV_JOINING";
       break;
     case EV_JOINED:
       Serial.println(F("EV_JOINED"));
+      LoraStatus = "EV_JOINED";
       // Disable link check validation (automatically enabled
       // during join, but not supported by TTN at this time).
       LMIC_setLinkCheckMode(0);
       break;
     case EV_RFU1:
       Serial.println(F("EV_RFU1"));
+      LoraStatus = "EV_RFU1";
       break;
     case EV_JOIN_FAILED:
       Serial.println(F("EV_JOIN_FAILED"));
+      LoraStatus = "EV_JOIN_FAILED";
       break;
     case EV_REJOIN_FAILED:
       Serial.println(F("EV_REJOIN_FAILED"));
+      LoraStatus = "EV_REJOIN_FAILED";
       break;
     case EV_TXCOMPLETE:
       Serial.println(F("EV_TXCOMPLETE (includes waiting for RX windows)"));
-      digitalWrite(BUILTIN_LED, LOW);
+      LoraStatus = "EV_TXCOMPLETE";
+      digitalWrite(BUILTIN_LED, LOW);  
       if (LMIC.txrxFlags & TXRX_ACK) {
         Serial.println(F("Received Ack"));
+        LoraStatus = "Received Ack";
       }
       if (LMIC.dataLen) {
         sprintf(s, "Received %i bytes of payload", LMIC.dataLen);
@@ -88,22 +105,28 @@ void onEvent (ev_t ev) {
       break;
     case EV_LOST_TSYNC:
       Serial.println(F("EV_LOST_TSYNC"));
+      LoraStatus = "EV_LOST_TSYNC";
       break;
     case EV_RESET:
       Serial.println(F("EV_RESET"));
+      LoraStatus = "EV_RESET";
       break;
     case EV_RXCOMPLETE:
       // data received in ping slot
       Serial.println(F("EV_RXCOMPLETE"));
+      LoraStatus = "EV_RXCOMPLETE";
       break;
     case EV_LINK_DEAD:
       Serial.println(F("EV_LINK_DEAD"));
+      LoraStatus = "EV_LINK_DEAD";
       break;
     case EV_LINK_ALIVE:
       Serial.println(F("EV_LINK_ALIVE"));
+      LoraStatus = "EV_LINK_ALIVE";
       break;
     default:
       Serial.println(F("Unknown event"));
+      LoraStatus = "Unknown event";
       break;
   }
 }
@@ -114,6 +137,7 @@ void do_send(osjob_t* j) {
   if (LMIC.opmode & OP_TXRXPEND)
   {
     Serial.println(F("OP_TXRXPEND, not sending"));
+    LoraStatus = "OP_TXRXPEND, not sending";
   }
   else
   { 
@@ -124,6 +148,7 @@ void do_send(osjob_t* j) {
       LMIC_setTxData2(1, txBuffer, sizeof(txBuffer), 0);
       Serial.println(F("Packet queued"));
       digitalWrite(BUILTIN_LED, HIGH);
+      LoraStatus = "Packet queued";
     }
     else
     {
@@ -138,7 +163,8 @@ void setup() {
   Serial.begin(115200);
   Serial.println(F("TTN Mapper"));
   
-   display.begin(SSD1306_SWITCHCAPVCC, 0x3C, 0, 22, 21, 800000);
+  pinMode(vbatPin, INPUT);// Battery mesurement
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C, 0, 22, 21, 800000);
   display.clearDisplay();
   // set text color / Textfarbe setzen
   display.setTextColor(WHITE);
@@ -194,6 +220,8 @@ void setup() {
 }
 
 void loop() {
+    VBAT = (float)(analogRead(vbatPin)) / 4095*2*3.3*1.1;// Battery Voltage
+    
     os_runloop_once();
     if (gps.checkGpsFix())
     { 
@@ -204,7 +232,11 @@ void loop() {
     display.setTextSize(1);
     display.setCursor(0,0);
     display.println("SAT: " + String(txBuffer2[0]));
-    display.setCursor(0,10);
+    display.setCursor(97,0);
+    display.println(VBAT);
+    display.setCursor(122,0);
+    display.println("V");
+    display.setCursor(128,0);
     display.println("Speed: " + String(txBuffer2[1]));
     display.setCursor(0,20);
     display.println("Course: " + String(txBuffer2[2]));
@@ -214,6 +246,11 @@ void loop() {
     display.println("HDOP: ");
     display.setCursor(35,40);
     display.println(hdop,1);
+    display.setCursor(0,50);
+    display.println("LoRa: ");
+    display.setCursor(35,50);
+    display.println(LoraStatus);
+    
     display.display();
     }
     else
@@ -225,6 +262,11 @@ void loop() {
     display.println("No valid");
     display.setCursor(0,16);
     display.println("GPS fix");
+    display.setTextSize(1);
+    display.setCursor(97,0);
+    display.println(VBAT);
+    display.setCursor(122,0);
+    display.println("V");
     display.display();
     }
 }
