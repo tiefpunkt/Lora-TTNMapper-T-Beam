@@ -11,9 +11,9 @@ void gps::init()
 void gps::encode()
 {       
     int data;
-    int previousMillis = millis();
+    unsigned long previousMillis = millis();
 
-    while((previousMillis + 1000) > millis())
+    while((previousMillis + 100) > millis())
     {
         while (GPSSerial.available() )
         {
@@ -65,12 +65,12 @@ bool gps::checkGpsFix()
 {
   encode();
   if (tGps.location.isValid() && 
-      tGps.location.age() < 2000 &&
+      tGps.location.age() < 4000 &&
       tGps.hdop.isValid() &&
-      tGps.hdop.value() <= 300 &&
-      tGps.hdop.age() < 2000 &&
+      tGps.hdop.value() <= 600 &&
+      tGps.hdop.age() < 4000 &&
       tGps.altitude.isValid() && 
-      tGps.altitude.age() < 2000 )
+      tGps.altitude.age() < 4000 )
   {
     Serial.println("Valid gps Fix.");
     return true;
@@ -78,20 +78,20 @@ bool gps::checkGpsFix()
   else
   {
      Serial.println("No gps Fix.");
-    // sprintf(t, "location valid: %i" , tGps.location.isValid());
-    // Serial.println(t);
-    // sprintf(t, "location age: %i" , tGps.location.age());
-    // Serial.println(t);
-    // sprintf(t, "hdop valid: %i" , tGps.hdop.isValid());
-    // Serial.println(t);
-    // sprintf(t, "hdop age: %i" , tGps.hdop.age());
-    // Serial.println(t);
-    // sprintf(t, "hdop: %i" , tGps.hdop.value());
-    // Serial.println(t);
-    // sprintf(t, "altitude valid: %i" , tGps.altitude.isValid());
-    // Serial.println(t);
-    // sprintf(t, "altitude age: %i" , tGps.altitude.age());
-    // Serial.println(t);
+//     sprintf(t, "location valid: %i" , tGps.location.isValid());
+//     Serial.println(t);
+//     sprintf(t, "location age: %i" , tGps.location.age());
+//     Serial.println(t);
+//     sprintf(t, "hdop valid: %i" , tGps.hdop.isValid());
+//     Serial.println(t);
+//     sprintf(t, "hdop age: %i" , tGps.hdop.age());
+//     Serial.println(t);
+//     sprintf(t, "hdop: %i" , tGps.hdop.value());
+//     Serial.println(t);
+//     sprintf(t, "altitude valid: %i" , tGps.altitude.isValid());
+//     Serial.println(t);
+//     sprintf(t, "altitude age: %i" , tGps.altitude.age());
+//     Serial.println(t);
 
     return false;
   }

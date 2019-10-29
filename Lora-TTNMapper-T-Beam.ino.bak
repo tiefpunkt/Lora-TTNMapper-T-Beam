@@ -345,7 +345,7 @@ void onEvent (ev_t ev) {
         sprintf(s, "RSSI %d SNR %.1d", LMIC.rssi, LMIC.snr);
         Serial.println(s);
       }
-      // Schedule next transmission
+      // Schedule next transmission or RESET
       os_setTimedCallback(&sendjob, os_getTime() + sec2osticks(TX_INTERVAL), do_send);
       break;
     case EV_LOST_TSYNC:
