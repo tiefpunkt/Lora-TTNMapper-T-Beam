@@ -16,7 +16,7 @@ Derived from [sbiermann/Lora-TTNMapper-ESP32](https://github.com/sbiermann/Lora-
 * selectable ADR-Mode (button even longer press)
 * selectable send-port to enable "on device" switch to experimental mapping (button even loooonger press)
 
-![Start screen](images/tbsc_02.jpg)![GPS fix screen](images/tbsc_01.jpg)![Status screen](images/tbsc_03.jpg) 
+![Start screen](images/sc_02.jpg)![GPS fix screen](images/sc_01.jpg)![Status screen](images/sc_03.jpg) 
 
 ## Software dependencies
 
