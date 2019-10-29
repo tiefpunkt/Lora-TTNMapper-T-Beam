@@ -6,6 +6,18 @@ This is a simple sketch demonstrating the capability of the [TTGO T-Beam](https:
 
 Derived from [sbiermann/Lora-TTNMapper-ESP32](https://github.com/sbiermann/Lora-TTNMapper-ESP32) and with some information/inspiration from [cyberman54/ESP32-Paxcounter](https://github.com/cyberman54/ESP32-Paxcounter) and [Edzelf/LoRa](https://github.com/Edzelf/LoRa).
 
+## New features
+
+* GPS scan relaxed and done more "nonblocking"
+* more informations shown on status screen
+* animated GPS-fix-screen with satelite gfx
+* selectable datarate and power (button short press)
+* selectable transmit interval (button longer press)
+* selectable ADR-Mode (button even longer press)
+* selectable send-port to enable "on device" switch to experimental mapping (button even loooonger press)
+
+![Start screen](images/tbsc_02.jpg) ![GPS fix screen](images/tbsc_01.jpg) ![Status screen](images/tbsc_03.jpg) 
+
 ## Software dependencies
 
 Arduino IDE [ESP32 extension](https://github.com/espressif/arduino-esp32)
@@ -49,18 +61,3 @@ function Decoder(bytes, port) {
     return decoded;
 }
 ```
-
-Let me know if more detailed instructions are needed.
-
-## Todolist
-
-* ~~Stop sending data to TTN until the GPS get a fix.~~ <== Done thanks to [@Roeland54](https://github.com/Roeland54)
-* Manage and document the different T-Beam revisions/versions.
-* Switch to OTAA auth method for TTN and save the 'credentials' for reboot use.
-* Save and reload the frame counter somewhere - GPS RTC data ? SPIFFS ? EEPROM ? - so I can check the "Frame Counter Checks" box as recommended on TTN.
-* Also save the GPS 'status' so that on next boot it gets a fix faster.
-* Reduce the power needed ! That thing is a power hog currently, we need to make it sleep most of the time as possible.
-* Adapt the data send frequency based on current velocity : When not moving, an update per hour should be enough.
-
-Let me know if you think anything else would make sense for a TTN mapper node : Open an issue, I will consider it.
-
