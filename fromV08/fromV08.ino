@@ -437,7 +437,7 @@ void setup() {
   display.setCursor(0,32);
   display.print("\\/\\/\\/\\/\\/");
   display.setCursor(8,48);
-  display.print("t-beam-02");
+  display.print("MY_DEVICE");
   display.drawLine(0, 9, display.width(), 9, WHITE);
   display.setTextSize(1);
   display.setCursor(86,0);
@@ -624,6 +624,7 @@ void loop() {
       display.setCursor(104,0);
       display.print(VBAT,1);
       display.setCursor(122,0);
+      // display charging-state
       if (axp.isChargeing())
       {
         display.print("V");
