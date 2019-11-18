@@ -15,6 +15,7 @@ Derived from [sbiermann/Lora-TTNMapper-ESP32](https://github.com/sbiermann/Lora-
 * selectable transmit interval (button longer press)
 * selectable ADR-Mode (button even longer press)
 * selectable send-port to enable "on device" switch to experimental mapping (button even loooonger press)
+* support for newer HW-revisions (with soft-power-button and powermanagement chip) (short press = power-on / dimm-mode; long press = power-off)
 
 ![Start screen](images/sc_02.jpg)![GPS fix screen](images/sc_01.jpg)![Status screen](images/sc_03.jpg) 
 
@@ -30,7 +31,8 @@ Arduino IDE [ESP32 extension](https://github.com/espressif/arduino-esp32)
 
 You can program the T-Beam using the [Arduino ESP32](https://github.com/espressif/arduino-esp32) board 't-beam'.
 
-It is suitable for t-beam HW-Version up to V07. Higher versions (Soft-Power-Button) need different software.
+It is suitable for t-beam HW-Version up to V07 (use folder "uptoV07") and higher versions with Soft-Power-Button (use folder "fromV08").
+For version V08 and higher you also need [this library](https://github.com/lewisxhe/AXP202X_Library) from Lewis He.
 
 On The Things Network side, the settings needed are available [here](https://www.thethingsnetwork.org/docs/applications/ttnmapper/).
 
