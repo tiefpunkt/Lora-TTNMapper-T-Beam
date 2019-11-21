@@ -15,7 +15,7 @@ Derived from [sbiermann/Lora-TTNMapper-ESP32](https://github.com/sbiermann/Lora-
 * selectable transmit interval (button longer press)
 * selectable ADR-Mode (button even longer press)
 * selectable send-port to enable "on device" switch to experimental mapping (button even loooonger press)
-* support for newer HW-revisions (with soft-power-button and powermanagement chip) (short press = power-on / dimm-mode; long press = power-off)
+* support for newer HW-revisions (V08 / V0.8, V09 / V0.9, V10 / V1.0, with soft-power-button and powermanagement chip) (short press = power-on / dimm-mode; long press = power-off)
 
 ![Start screen](images/sc_02.jpg)![GPS fix screen](images/sc_01.jpg)![Status screen](images/sc_03.jpg) 
 
